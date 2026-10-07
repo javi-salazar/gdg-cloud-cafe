@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Secretos y credenciales: nunca van al repo
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*-key.json
+*credentials*.json
+service-account*.json
+
+# Editores, sistema operativo y herramientas locales
+.vscode/
+.idea/
+.DS_Store
+*.swp
+.claude/settings.local.json
+
+# Varios
+*.log

@@ -1,0 +1,113 @@
+/* Cloud Café — estilos simples, pensados para verse bien en un proyector. */
+
+:root {
+  --cafe: #4e342e;
+  --crema: #fbf6ef;
+  --gris: #6b6560;
+  --verde: #137333;
+  --verde-fondo: #e6f4ea;
+  --rojo: #b3261e;
+  --rojo-fondo: #fce8e6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 18px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--crema);
+  color: var(--cafe);
+}
+
+/* Franja con los cuatro colores de Google: un guiño a GDG */
+body::before {
+  content: "";
+  display: block;
+  height: 6px;
+  background: linear-gradient(90deg,
+    #4285f4 0 25%, #ea4335 25% 50%, #fbbc04 50% 75%, #34a853 75% 100%);
+}
+
+header, main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 24px;
+}
+
+h1 { margin: 0; font-size: 2.2rem; }
+h2 { margin: 28px 0 12px; font-size: 1.3rem; }
+
+/* Badge con el release que está respondiendo */
+.badge {
+  background: var(--cafe);
+  color: #fff;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font: 600 1rem ui-monospace, Menlo, Consolas, monospace;
+}
+
+ul { list-style: none; margin: 0; padding: 0; }
+
+/* Menú: una fila por café */
+.menu li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+}
+.menu .nombre { flex: 1; font-weight: 600; }
+.menu .precio { color: var(--gris); }
+
+button {
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--cafe);
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 18px;
+  cursor: pointer;
+}
+button:hover { opacity: 0.85; }
+button:active { transform: scale(0.97); }
+
+/* Órdenes: gris mientras se prepara, verde si salió bien, rojo si falló */
+.ordenes li {
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border-left: 6px solid var(--gris);
+  background: #fff;
+}
+.ordenes li.ok {
+  color: var(--verde);
+  background: var(--verde-fondo);
+  border-color: var(--verde);
+}
+.ordenes li.error {
+  color: var(--rojo);
+  background: var(--rojo-fondo);
+  border-color: var(--rojo);
+  font-weight: 600;
+}
+.ordenes small {
+  display: block;
+  color: var(--gris);
+  font-weight: 400;
+}
+
+.contador { margin-left: 8px; font-size: 1rem; font-weight: 400; color: var(--gris); }
+.vacio { color: var(--gris); }

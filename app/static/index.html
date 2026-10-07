@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cloud Café</title>
+  <!-- Ícono ☕ incrustado: así el navegador no pide /favicon.ico (menos ruido en los logs) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☕</text></svg>">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>☕ Cloud Café</h1>
+    <!-- El release que respondió: viene en el header X-Release de cada respuesta -->
+    <span id="release" class="badge" title="Release que respondió (header X-Release)">…</span>
+  </header>
+
+  <main>
+    <section>
+      <h2>Menú</h2>
+      <ul id="menu" class="menu"></ul>
+    </section>
+
+    <section>
+      <h2>Tus órdenes <span id="contador" class="contador"></span></h2>
+      <p id="vacio" class="vacio">Todavía no ordenas nada. ¡Pide un café!</p>
+      <ul id="ordenes" class="ordenes"></ul>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
