@@ -26,10 +26,13 @@
 
 ## Cloud Run
 <!-- Detectado al construir el repo:
-     - Cloud Run reserva algunas rutas que terminan en "z": /healthz puede devolver un 404
-       de Google desde fuera, sin llegar al contenedor (localmente sí funciona).
-     - cloudbuild.yaml pone RELEASE_NAME=$SHORT_SHA, así que en Cloud Run el badge muestra
-       el SHA del commit, no "v1-estable" / "v2-promos" (esos defaults se ven en local). -->
+     - La app usa /health y no /healthz: Cloud Run reserva algunas rutas que terminan en
+       "z" y desde fuera pueden devolver un 404 de Google sin llegar al contenedor.
+     - cloudbuild.yaml no manda RELEASE_NAME: el badge muestra el default del código de cada
+       rama (v1-estable → v2-promos → v2.1-promos-fixed). Ojo: Cloud Run conserva las
+       variables de entorno entre deploys; si alguna vez desplegaste con
+       --set-env-vars=RELEASE_NAME=..., quítala con:
+       gcloud run services update cloud-cafe --region=us-central1 --remove-env-vars=RELEASE_NAME -->
 
 ## Logs y métricas
 <!-- Detectado al construir el repo:

@@ -4,7 +4,7 @@ Endpoints:
   GET  /           la página (UI)
   GET  /api/menu   el menú en JSON
   POST /api/order  ordenar un café, por ejemplo {"item": "latte"}
-  GET  /healthz    ¿la app está viva?
+  GET  /health     ¿la app está viva?
 """
 
 import json
@@ -20,8 +20,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-# Nombre del release. Cloud Build lo pasa como variable de entorno;
-# si no existe (por ejemplo, en tu laptop), usamos este default.
+# Nombre del release: se ve en el badge y en el header X-Release.
+# Se puede cambiar con la variable de entorno RELEASE_NAME.
 RELEASE_NAME = os.environ.get("RELEASE_NAME", "v1-estable")
 
 # Carpeta con el HTML, CSS y JS de la página.
@@ -128,8 +128,9 @@ def ordenar(pedido: Pedido):
     return orden
 
 
-@app.get("/healthz")
-def healthz():
+# /health y no /healthz: Cloud Run reserva algunas rutas que terminan en "z".
+@app.get("/health")
+def health():
     return {"status": "ok", "release": RELEASE_NAME}
 
 
