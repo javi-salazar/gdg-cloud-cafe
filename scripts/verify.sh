@@ -35,11 +35,11 @@ else
   falla "gcloud no tiene una sesión activa" "corre: gcloud auth login"
 fi
 
-# 2) Proyecto configurado (y que de verdad exista)
+# 2) Proyecto configurado (y, si ya hay sesión, que de verdad exista)
 PROYECTO="$(gcloud config get-value project 2>/dev/null)"
 if [[ -z "$PROYECTO" ]]; then
   falla "No hay proyecto configurado" "corre: gcloud config set project TU_PROJECT_ID"
-elif ! gcloud projects describe "$PROYECTO" >/dev/null 2>&1; then
+elif ((FALLAS == 0)) && ! gcloud projects describe "$PROYECTO" >/dev/null 2>&1; then
   falla "No puedo abrir el proyecto '$PROYECTO'" "revisa el ID con: gcloud projects list"
 else
   ok "Proyecto configurado: $PROYECTO"

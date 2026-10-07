@@ -58,7 +58,8 @@ else
 fi
 
 echo "[3/3] Permisos para que Cloud Build despliegue en Cloud Run..."
-# gcloud la devuelve como "projects/.../serviceAccounts/CORREO"; nos quedamos con el CORREO.
+# Según la versión de gcloud llega como CORREO o como "projects/.../serviceAccounts/CORREO";
+# nos quedamos solo con el CORREO.
 CUENTA_BUILD="$(gcloud builds get-default-service-account --format='value(serviceAccountEmail)')"
 CUENTA_BUILD="${CUENTA_BUILD##*/}"
 echo "      Cuenta de servicio de Cloud Build: $CUENTA_BUILD"
