@@ -22,7 +22,7 @@ from pydantic import BaseModel
 
 # Nombre del release: se ve en el badge y en el header X-Release.
 # Se puede cambiar con la variable de entorno RELEASE_NAME.
-RELEASE_NAME = os.environ.get("RELEASE_NAME", "v1-estable")
+RELEASE_NAME = os.environ.get("RELEASE_NAME", "v2-promos")
 
 # Carpeta con el HTML, CSS y JS de la página.
 STATIC_DIR = Path(__file__).parent / "static"
@@ -67,12 +67,25 @@ def buscar_cafe(item_id):
     return None
 
 
+# NUEVO en v2: promociones del día (% de descuento por café).
+PROMOS = {"latte": 10, "cold_brew": 15}
+
+
+def obtener_promo(item_id):
+    """NUEVO en v2: le pregunta al motor de promociones (simulado)."""
+    if random.random() < 0.3:  # ~30% de las veces...
+        raise RuntimeError("promo engine crashed")  # ...el motor truena 💥
+    time.sleep(random.uniform(3, 6))  # ...y si no, tarda de 3 a 6 s 🐢
+    return PROMOS.get(item_id, 0)
+
+
 def preparar_orden(cafe):
     """Arma la orden: un número de orden y en cuántos minutos sale."""
     return {
         "status": "ok",
         "order_id": random.randint(1000, 9999),
         "eta_min": cafe["eta_min"],
+        "promo_pct": obtener_promo(cafe["id"]),  # NUEVO en v2
     }
 
 
