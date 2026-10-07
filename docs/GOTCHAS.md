@@ -155,7 +155,8 @@ gcloud builds triggers create github --name=deploy-main \
 
 ### 4.2 Tiempos
 - **Conexión GitHub ↔ Cloud Build:** en este ensayo la hizo el facilitador a mano (las ventanas emergentes de
-  OAuth quedan fuera de la pestaña de la consola). *Tiempo por medir con cronómetro en el Brief D.*
+  OAuth quedan fuera de la pestaña de la consola). Le tomó **~1 min**, ya conociendo el flujo, y GitHub pidió
+  **2FA**. El Brief D lo cronometra con alguien que lo hace por primera vez.
 - **Trigger → producción:** push → build en **3 s**; build 14 s; push de imagen 7 s; deploy 31 s →
   **59 s** de commit a producción (con el fix de 11.2).
 
@@ -175,8 +176,9 @@ Su camino es `gcloud run deploy --source` (CP2): ~45 s por deploy, sin credencia
 No es un tema de cuotas: con 40 personas en paralelo no hay límites compartidos, porque cada quien tiene su
 proyecto y su cuenta de GitHub.
 
+**Adoptado en la GUIA v2:** CP3 es la demo del trigger y los asistentes despliegan con `deploy --source`;
+el flujo fork + trigger queda como anexo para casa, con la checklist de 2.5, 2.6 y el token de GitHub.
 **Para la demo:** el repo de ensayo ya está conectado a Cloud Build; un push a `main` llega a producción en ~1 min.
-**Bonus opcional** para quien vaya adelantado: este mismo flujo con la checklist de 2.5, 2.6 y el token de GitHub.
 
 ## 5. Break: ¿se ve el desastre?
 
@@ -217,8 +219,11 @@ gcloud run services update-traffic cloud-cafe --region us-central1 \
 
 ## 7. Fork y rescate
 
+> **Decisión de diseño (7-oct):** en el taller nadie hace fork ni push; los asistentes clonan el repo original.
+> Por eso se canceló la prueba de fork desde una organización. Esta sección solo aplica al anexo para casa.
+
 **Paso exacto:** en `github.com/javi-salazar/gdg-cloud-cafe` → **Fork** → **desmarcar "Copy the `main` branch
-only"** → *Create fork*. *Pendiente: verificarlo en un fork real desde una organización.*
+only"** → *Create fork*.
 
 **Rescate** para quien hizo el fork con la casilla marcada. Probado simulando un fork que solo trae `main`:
 ```bash
@@ -266,6 +271,9 @@ confirma la frase del pre-work ("menos de $1").
 El reporte de facturación tarda hasta 24 h: *Billing → Reports*, filtrado por el proyecto.
 
 ## 10. Ajustes sugeridos a la GUIA v1
+
+> **Estado en la GUIA v2:** ya incorpora 1, 3, 4, 6, 7, 8 y 9. Quedan abiertos: 2 (crear el proyecto y ligar
+> billing desde el pre-work), la pregunta `(Y/n)` del punto 5 y los repos y el bucket de la limpieza (punto 10).
 
 1. **CP0:** `verify.sh` marca ❌ en las APIs hasta correr `setup.sh` (que está en CP2), así que el checkpoint
    "¡Listo para el workshop!" no se cumple en CP0. → Mover `./scripts/setup.sh` a CP0, antes de `verify.sh`
