@@ -9,6 +9,9 @@
 # Uso: ./scripts/setup.sh
 set -euo pipefail
 
+# Que gcloud nunca se quede esperando un "(y/N)" a mitad del script.
+export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+
 REGION="us-central1"
 REPO="cloud-cafe"
 APIS=(
@@ -34,6 +37,20 @@ ayuda_si_falla() {
 }
 trap ayuda_si_falla ERR
 
+# Una API recién habilitada tarda unos segundos en responder (medido: ~30 s).
+# Repetimos el comando cada 5 s hasta que funcione, máximo 2 minutos.
+esperar_api() {
+  local intentos=0
+  until "$@" >/dev/null 2>&1; do
+    intentos=$((intentos + 1))
+    if ((intentos >= 24)); then
+      echo "      ❌ Pasaron 2 minutos y la API no responde: $*"
+      return 1
+    fi
+    sleep 5
+  done
+}
+
 PROJECT_ID="$(gcloud config get-value project 2>/dev/null)"
 if [[ -z "$PROJECT_ID" ]]; then
   echo "❌ No hay proyecto configurado. Corre: gcloud config set project TU_PROJECT_ID"
@@ -44,7 +61,11 @@ echo
 
 echo "[1/3] Habilitando APIs (la primera vez tarda 1-2 minutos)..."
 gcloud services enable "${APIS[@]}"
-echo "      ✅ APIs habilitadas"
+echo "      Esperando a que respondan..."
+esperar_api gcloud artifacts repositories list --location="$REGION"
+esperar_api gcloud builds get-default-service-account
+esperar_api gcloud run services list --region="$REGION"
+echo "      ✅ APIs habilitadas y respondiendo"
 
 echo "[2/3] Repositorio '$REPO' en Artifact Registry ($REGION)..."
 if gcloud artifacts repositories describe "$REPO" --location="$REGION" >/dev/null 2>&1; then
@@ -68,7 +89,7 @@ for ROL in "${ROLES[@]}"; do
     --member="serviceAccount:$CUENTA_BUILD" \
     --role="$ROL" \
     --condition=None \
-    --quiet >/dev/null
+    --quiet --no-user-output-enabled
   echo "      ✅ $ROL"
 done
 
