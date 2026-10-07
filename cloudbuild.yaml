@@ -1,0 +1,50 @@
+# Pipeline de CI/CD de Cloud Café: build → push → deploy.
+#
+# Variables sustituibles (se cambian con --substitutions=_REGION=...,_SERVICE=...):
+#   _REGION   región de Artifact Registry y de Cloud Run
+#   _AR_REPO  repositorio Docker en Artifact Registry (lo crea scripts/setup.sh)
+#   _SERVICE  nombre del servicio en Cloud Run (y también de la imagen)
+#
+# Variables que pone Cloud Build por su cuenta:
+#   $PROJECT_ID  el ID de tu proyecto
+#   $SHORT_SHA   los primeros 7 caracteres del commit. Solo existe cuando un
+#                trigger dispara el build; en un build manual pásala tú:
+#                gcloud builds submit --substitutions=SHORT_SHA=$(git rev-parse --short HEAD)
+
+substitutions:
+  _REGION: us-central1
+  _AR_REPO: cloud-cafe
+  _SERVICE: cloud-cafe
+
+options:
+  # Los logs del build van directo a Cloud Logging (sin bucket de logs aparte)
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # 1) Construir la imagen con el Dockerfile de este repo
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE}:$SHORT_SHA
+      - .
+
+  # 2) Subir la imagen a Artifact Registry
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE}:$SHORT_SHA
+
+  # 3) Desplegar la imagen en Cloud Run (cada deploy crea una revisión nueva)
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --allow-unauthenticated
+      - --set-env-vars=RELEASE_NAME=$SHORT_SHA
