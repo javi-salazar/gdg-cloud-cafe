@@ -42,8 +42,8 @@ steps:
   #    En producción real aquí inyectarías el commit:
   #      --set-env-vars=RELEASE_NAME=$SHORT_SHA
   - id: deploy
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
-    entrypoint: gcloud
+    # Imagen de gcloud que Cloud Build ya tiene en caché: arranca al instante
+    name: gcr.io/cloud-builders/gcloud
     args:
       - run
       - deploy
