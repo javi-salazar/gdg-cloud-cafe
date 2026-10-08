@@ -1,4 +1,4 @@
-# Gotchas · ensayo real en GCP (Brief B)
+# Gotchas · ensayo real en GCP (Briefs B y C)
 
 > Ensayo de punta a punta el **7 de octubre de 2026** en un proyecto nuevo (`us-central1`, cuenta Gmail
 > personal, sin organización), con gcloud 584 desde una laptop. Cloud Shell no se usó: lo que depende de él
@@ -16,6 +16,8 @@
   completos en Logging. El rollback recupera el servicio en **~30 s**.
 - El paso de IAM de `setup.sh` **hace falta**: sin `run.admin`, el trigger deja el servicio privado (403)
   aunque el build salga verde (3.1).
+- **Copiloto (Brief C, sección 12): la key de Gemini tiene que ser de un proyecto SIN billing.** En uno
+  con billing (como `cloud-cafe-tunombre`), la API pide prepago y responde `402`. Diagnóstico real en ~8 s.
 
 ## 1. Tiempos reales por paso
 
@@ -272,8 +274,8 @@ El reporte de facturación tarda hasta 24 h: *Billing → Reports*, filtrado por
 
 ## 10. Ajustes sugeridos a la GUIA v1
 
-> **Estado en la GUIA v2:** ya incorpora 1, 3, 4, 6, 7, 8 y 9. Quedan abiertos: 2 (crear el proyecto y ligar
-> billing desde el pre-work), la pregunta `(Y/n)` del punto 5 y los repos y el bucket de la limpieza (punto 10).
+> **Estado en la GUIA v2.1:** ya incorpora los 10 puntos. La limpieza del punto 10 vive en
+> `scripts/cleanup.sh`, que llega en el Brief D.
 
 1. **CP0:** `verify.sh` marca ❌ en las APIs hasta correr `setup.sh` (que está en CP2), así que el checkpoint
    "¡Listo para el workshop!" no se cumple en CP0. → Mover `./scripts/setup.sh` a CP0, antes de `verify.sh`
@@ -303,3 +305,77 @@ El reporte de facturación tarda hasta 24 h: *Billing → Reports*, filtrado por
 2. **`build`:** el paso de deploy usa `gcr.io/cloud-builders/gcloud`, que Cloud Build ya tiene en caché: se
    descarga en 0 s contra 30 s de `cloud-sdk:slim`. Commit → producción pasa de 96 s a 59 s.
 3. **`docs`:** este archivo.
+
+## 12. Copiloto con Gemini (Brief C)
+
+> Probado el 7 de octubre de 2026 contra el servicio real: release `v2-promos` + 3 min de `loadgen.sh`, y
+> `python3 copilot/copilot.py --minutes 10` con el venv de CP1. Salida completa en `copilot/README.md`.
+
+### 12.1 ⚠️ La key de Gemini NO puede ser del proyecto del workshop
+
+- Con una key creada en el proyecto de prueba (que tiene billing), toda llamada respondió
+  `402 Your prepayment credits are depleted`.
+- Desde marzo de 2026, en proyectos con billing la API de Gemini funciona con **prepago** (mínimo $5) y el
+  free trial de $300 ya no la cubre ([docs de billing](https://ai.google.dev/gemini-api/docs/billing)).
+  El free tier es solo para proyectos **sin** billing.
+- Con una key de un proyecto sin billing (lo que hace AI Studio por defecto) funcionó a la primera, gratis.
+- **Para la guía:** el pre-work pide la key justo después de crear `cloud-cafe-tunombre` con billing. Hay que
+  decir explícitamente: "créala en un proyecto nuevo o sin facturación, NO en `cloud-cafe-tunombre`".
+  Si alguien cae, el copiloto explica el `402` y qué hacer.
+
+### 12.2 Qué modelo: `gemini-3.5-flash`
+
+El Flash más nuevo es `gemini-3.8-flash` (GA el 2-sep-2026), pero en el free tier respondía `503` ("high
+demand"). Medido el 7-oct entre 20:38 y 20:52 (hora de Hermosillo), con un prompt corto:
+
+| Modelo | Respuestas OK | Latencia de las OK |
+|---|---|---|
+| `gemini-3.8-flash` | 1 de 9 (7 × 503, 1 colgada > 120 s) | 54 s |
+| `gemini-3.7-flash` | 1 de 3 | 45 s |
+| `gemini-3.6-flash` | 1 de 2 | 4 s |
+| `gemini-flash-latest` | 2 de 3 | 18–45 s |
+| `gemini-3.5-flash-lite` | 1 de 2 | 12 s |
+| **`gemini-3.5-flash`** | **5 de 5** | **3–6 s** |
+
+`gemini-3.5-flash` es estable y su retiro no puede ser antes de mayo de 2027. Vive en la constante `MODEL`,
+con instrucciones para cambiarlo, y el copiloto reintenta 2 veces si recibe un `503`.
+
+### 12.3 Latencia: thinking "low" + cada traceback una sola vez
+
+| Variante (misma evidencia) | Gemini tarda |
+|---|---|
+| 29 KB (tracebacks repetidos), thinking por defecto | 26–54 s |
+| 29 KB, thinking `low` | 9 s |
+| 10 KB (cada traceback una vez), thinking `low` | **3–9 s** ← la que quedó |
+
+`gcloud logging read` tarda ~1–2 s y los logs aparecen en segundos (a diferencia de las métricas, 2.8): el
+copiloto vio requests de 20 s antes. Corrida completa: **~5–12 s**.
+
+### 12.4 Lo que el copiloto ve (y lo que no)
+
+- El filtro del brief (WARNING o peor + requests 5xx) no incluye los requests que salen bien. Con la primera
+  versión del prompt, Gemini concluía "caído para el 100% de los usuarios, SEV1", cuando falla ~1 de cada 4
+  órdenes. Corregido en `PROMPT_INCIDENTE`: ahora da SEV2 y dice qué métrica revisar para confirmar.
+- **La latencia no se ve:** los requests lentos son 200 con severidad INFO. Probado aparte: agregando
+  `OR httpRequest.latency>="1s"` a `FILTRO`, el diagnóstico también menciona los 3–6 s, pero llena el tope de
+  200 entradas. No se aplicó: el filtro es decisión del brief.
+- **Los comandos sugeridos pueden venir mal:** en una corrida propuso `gcloud run services update traffic`
+  (sin guion). Buen ejemplo en vivo de "hipótesis para verificar".
+
+### 12.5 Cambios al repo del Brief C
+
+1. `copilot/copilot.py` y `copilot/README.md`.
+2. `requests==2.34.2` en `app/requirements.txt`. El venv de CP1 no la tenía y CP6 fallaba con
+   `ModuleNotFoundError`. La imagen de la app la incluye sin usarla (~3 MB); a cambio, la guía funciona tal
+   cual.
+3. `README.md`: la cuenta de GitHub pasa a ser opcional (ya no hay fork) y se agrega la key de Gemini a los
+   pre-requisitos.
+
+Costo del Brief C: **$0** (key del free tier; ~5 mil tokens de entrada por diagnóstico).
+
+### 12.6 Ajustes sugeridos a la GUIA v2.1
+
+1. **Pre-work 4:** crear la key en un proyecto nuevo o sin facturación, NO en `cloud-cafe-tunombre` (12.1).
+   Y "guárdala donde la encuentres **el viernes**": el 17 de octubre de 2026 es **sábado**.
+2. **CP7 🛟:** sumar `402` → key de un proyecto con billing: crear otra en un proyecto sin facturación; y
+   `503` → Gemini saturado: esperar un minuto (el copiloto ya reintentó 2 veces).
