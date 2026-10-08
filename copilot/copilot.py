@@ -3,6 +3,7 @@
 
 Uso (en Cloud Shell, con el entorno activado):
   export GEMINI_API_KEY="tu-key"                  # gratis en https://aistudio.google.com/apikey
+  python3 copilot/copilot.py --check              # ¿tu key sirve? (una llamada mínima)
   python3 copilot/copilot.py                      # últimos 15 min de cloud-cafe
   python3 copilot/copilot.py --minutes 10 --raw   # ...y muestra los logs que se enviaron
 
@@ -84,10 +85,12 @@ PASOS_KEY = ("Sácala gratis en 3 pasos:\n"
 
 # Qué hacer según el código de error de la API de Gemini.
 PISTAS = {
-    400: "Revisa tu GEMINI_API_KEY: ¿la copiaste completa?",
+    400: "Revisa tu GEMINI_API_KEY: ¿la copiaste completa? Si no sirve, crea otra en\n"
+         "   https://aistudio.google.com/apikey, en un proyecto SIN facturación.",
     402: "Tu key es de un proyecto CON facturación y ahí Gemini pide prepago.\n"
          "   Crea otra en https://aistudio.google.com/apikey, en un proyecto SIN facturación.",
-    403: "La key no tiene permiso para Gemini: crea otra en https://aistudio.google.com/apikey",
+    403: "La key no tiene permiso para Gemini: crea otra en https://aistudio.google.com/apikey,\n"
+         "   en un proyecto SIN facturación.",
     404: f"El modelo '{MODEL}' no existe o ya se retiró: cambia MODEL arriba de este archivo.",
     429: "Llegaste al límite del free tier: espera ~30 s y reintenta.",
     503: "Gemini sigue saturado: reintenta en un minuto, o cambia MODEL arriba de este archivo.",
@@ -166,11 +169,11 @@ def armar_evidencia(entradas):
 
 
 # --- 2. Preguntarle a Gemini ---------------------------------------------------
-def preguntar_a_gemini(api_key, contexto):
-    """Manda el prompt + los logs a la API REST de Gemini (generateContent)."""
+def preguntar_a_gemini(api_key, contexto, instrucciones=PROMPT_INCIDENTE):
+    """Manda las instrucciones + los logs a la API REST de Gemini (generateContent)."""
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent"
     cuerpo = {
-        "system_instruction": {"parts": [{"text": PROMPT_INCIDENTE}]},  # el rol y el formato
+        "system_instruction": {"parts": [{"text": instrucciones}]},  # el rol y el formato
         "contents": [{"role": "user", "parts": [{"text": contexto}]}],  # los datos: tus logs
         # Thinking "low": piensa menos y responde en segundos (el default tardaba 10-50 s).
         "generationConfig": {"thinkingConfig": {"thinkingLevel": "low"}},
@@ -237,6 +240,8 @@ def main():
                         help="servicio de Cloud Run (default: cloud-cafe)")
     parser.add_argument("--raw", action="store_true",
                         help="muestra también los logs que se le envían a Gemini")
+    parser.add_argument("--check", action="store_true",
+                        help="solo prueba tu API key con una llamada mínima a Gemini")
     args = parser.parse_args()
     if args.minutes < 1:
         parser.error("--minutes tiene que ser 1 o más")
@@ -244,6 +249,12 @@ def main():
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not api_key:
         salir("Falta tu API key de Gemini (la variable GEMINI_API_KEY está vacía).", PASOS_KEY)
+
+    if args.check:  # una llamada mínima y real: mejor saber ahora si tu key sirve
+        print(pintar(f"🔑 Probando tu key con {MODEL}...", GRIS))
+        preguntar_a_gemini(api_key, "Di solo: OK", instrucciones="Responde con una sola palabra.")
+        print(pintar("✅ key válida — Gemini respondió", NEGRITA, VERDE))
+        return
 
     titulo = f"🤖 Copiloto de incidentes · {args.service} · últimos {args.minutes} min"
     print(pintar(titulo, NEGRITA))

@@ -385,6 +385,9 @@ tokens): Gemini tardó 4–14 s en 8 de 9 corridas y 46 s en una. Corrida comple
 3. `README.md`: la cuenta de GitHub pasa a ser opcional (ya no hay fork) y se agrega la key de Gemini a los
    pre-requisitos.
 4. **8 de octubre:** filtro de latencia y ajustes al prompt (12.4); ejemplo de `copilot/README.md` actualizado.
+5. **8 de octubre:** `--check` para CP6 (12.6, punto 3): una llamada mínima real a Gemini que valida la key.
+   Probado: key válida → `✅ key válida — Gemini respondió` y exit 0 en 1.3–1.8 s; sin key, key inválida
+   (`400`) y key de un proyecto con billing (`402`) → mensaje con el arreglo y exit 1.
 
 Costo del Brief C: **$0** (key del free tier; ~5 mil tokens de entrada por diagnóstico, ~10.5 mil con el
 filtro de latencia).
@@ -402,7 +405,7 @@ filtro de latencia).
    antes de revisarla, aunque la key esté vacía o sea inválida. Así, el ✅ de CP6 pasa con cualquier key, y el
    "Error de key" y el `402` de su 🛟 no pueden salir ahí: aparecen hasta CP7 paso 2, ya con el incidente
    encima. → Un `--check` en el copiloto (una llamada mínima a Gemini, ~2 s: valida key, `402` y modelo) y que
-   CP6 lo use en lugar de `--help`. Son ~10 líneas; no se agregó porque cambia el texto de CP6.
+   CP6 lo use en lugar de `--help`. **Agregado el 8 de octubre** (12.5, punto 5).
 4. **CP6:** `cd gdg-cloud-cafe && source .venv/bin/activate` falla en la pestaña de CP1–CP5, que ya está
    dentro del repo: imprime `No such file or directory` y el `&&` se salta el `source` (el venv de CP1 suele
    seguir activo, así que más que romper, asusta). → `cd ~/gdg-cloud-cafe && source .venv/bin/activate`

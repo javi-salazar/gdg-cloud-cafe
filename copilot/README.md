@@ -11,12 +11,15 @@ gcloud logging read  ──►  copilot.py  ──►  Gemini (API REST)  ──
 
 1. **Saca tu API key de Gemini** (gratis): [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → Create API key.
    Créala en un proyecto **sin facturación**: en uno con facturación, Gemini pide prepago y responde `402`.
-2. **Activa el entorno de CP1** (ya trae `requests`) y exporta la key en esa misma pestaña:
+2. **Activa el entorno de CP1** (ya trae `requests`), exporta la key en esa misma pestaña y pruébala:
 
    ```bash
-   cd gdg-cloud-cafe && source .venv/bin/activate
+   cd ~/gdg-cloud-cafe && source .venv/bin/activate
    export GEMINI_API_KEY="pega-tu-key-aquí"
+   python3 copilot/copilot.py --check
    ```
+
+   `--check` hace una llamada mínima real a Gemini (~2 s). Si tu key sirve, dice `✅ key válida — Gemini respondió`.
 
 3. **Llama al copiloto** con el incidente en curso (y el loadgen corriendo un par de minutos):
 
@@ -29,6 +32,7 @@ gcloud logging read  ──►  copilot.py  ──►  Gemini (API REST)  ──
 | `--minutes N` | `15` | cuántos minutos hacia atrás leer |
 | `--service NOMBRE` | `cloud-cafe` | el servicio de Cloud Run |
 | `--raw` | | muestra también los logs que se le envían a Gemini |
+| `--check` | | solo prueba tu API key con una llamada mínima a Gemini |
 
 ## Ejemplo de salida
 
@@ -79,6 +83,7 @@ En tu terminal sale con colores. Cada corrida redacta distinto: Gemini no respon
 | Mensaje | Qué hacer |
 |---|---|
 | `Falta tu API key de Gemini` | `export GEMINI_API_KEY=...` en ESTA pestaña: cada pestaña de Cloud Shell es una sesión distinta. |
+| `Gemini respondió 400: API key not valid` | La key está incompleta o no existe: cópiala otra vez, o crea otra en un proyecto sin facturación. |
 | `ModuleNotFoundError` | `source .venv/bin/activate` |
 | `No encontré logs` | Genera tráfico ~2 min con `./scripts/loadgen.sh` y revisa que el tráfico vaya a la revisión rota. |
 | `Gemini respondió 402` | Tu key es de un proyecto con facturación: crea otra en uno sin facturación. |
