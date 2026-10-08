@@ -274,7 +274,7 @@ El reporte de facturación tarda hasta 24 h: *Billing → Reports*, filtrado por
 
 ## 10. Ajustes sugeridos a la GUIA v1
 
-> **Estado en la GUIA v2.1:** ya incorpora los 10 puntos. La limpieza del punto 10 vive en
+> **Estado en la GUIA v2.2:** ya incorpora los 10 puntos. La limpieza del punto 10 vive en
 > `scripts/cleanup.sh`, que llega en el Brief D.
 
 1. **CP0:** `verify.sh` marca ❌ en las APIs hasta correr `setup.sh` (que está en CP2), así que el checkpoint
@@ -373,9 +373,21 @@ copiloto vio requests de 20 s antes. Corrida completa: **~5–12 s**.
 
 Costo del Brief C: **$0** (key del free tier; ~5 mil tokens de entrada por diagnóstico).
 
-### 12.6 Ajustes sugeridos a la GUIA v2.1
+### 12.6 Ajustes sugeridos a la GUIA
+
+> **Estado en la GUIA v2.2:** incorpora el 1 y el 2. El 3 y el 4 salieron al revisar la v2.2 y siguen
+> pendientes.
 
 1. **Pre-work 4:** crear la key en un proyecto nuevo o sin facturación, NO en `cloud-cafe-tunombre` (12.1).
    Y "guárdala donde la encuentres **el viernes**": el 17 de octubre de 2026 es **sábado**.
 2. **CP7 🛟:** sumar `402` → key de un proyecto con billing: crear otra en un proyecto sin facturación; y
    `503` → Gemini saturado: esperar un minuto (el copiloto ya reintentó 2 veces).
+3. **CP6:** `python3 copilot/copilot.py --help` no prueba la key: argparse imprime la ayuda y sale (código 0)
+   antes de revisarla, aunque la key esté vacía o sea inválida. Así, el ✅ de CP6 pasa con cualquier key, y el
+   "Error de key" y el `402` de su 🛟 no pueden salir ahí: aparecen hasta CP7 paso 2, ya con el incidente
+   encima. → Un `--check` en el copiloto (una llamada mínima a Gemini, ~2 s: valida key, `402` y modelo) y que
+   CP6 lo use en lugar de `--help`. Son ~10 líneas; no se agregó porque cambia el texto de CP6.
+4. **CP6:** `cd gdg-cloud-cafe && source .venv/bin/activate` falla en la pestaña de CP1–CP5, que ya está
+   dentro del repo: imprime `No such file or directory` y el `&&` se salta el `source` (el venv de CP1 suele
+   seguir activo, así que más que romper, asusta). → `cd ~/gdg-cloud-cafe && source .venv/bin/activate`
+   funciona desde cualquier carpeta.

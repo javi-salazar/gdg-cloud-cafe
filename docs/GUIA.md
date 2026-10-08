@@ -1,8 +1,8 @@
-<!-- GUIA.md v2.1 — 8-oct-2026. Cambios sobre v2 (hallazgos post-Brief B): (1) pre-work ahora incluye crear proyecto + ligar billing (CP0 conserva el fallback para quien no lo hizo); (2) CP2 documenta el prompt "Do you want to continue (Y/n)?" del primer deploy --source; (3) limpieza vía scripts/cleanup.sh — NOTA para Brief D: cleanup.sh debe borrar también los repos de Artifact Registry (cloud-cafe y cloud-run-source-deploy) y el bucket de sources del build. PENDIENTE: ensayo literal del Brief D. -->
+<!-- GUIA.md v2.2 — 8-oct-2026. Cambios sobre v2.1 (hallazgos del Brief C): (1) la API key de Gemini DEBE crearse en un proyecto sin facturación (en proyectos con billing la API es prepago → 402); (2) 402 y 503 agregados a los 🛟 de CP6/CP7; (3) el 17-oct es SÁBADO, no viernes (corregido en todo el texto). El copiloto usa gemini-3.5-flash con 2 reintentos ante 503 y filtro de errores + latencia. PENDIENTE: ensayo literal del Brief D. -->
 
 # ☕ Ship it, Break it, Fix it — Guía del workshop
 
-GDG Hermosillo · 17 de octubre de 2026 · 2.5 horas CI/CD en Cloud Run + tu copiloto de incidentes con Gemini
+GDG Hermosillo · sábado 17 de octubre de 2026 · 2.5 horas CI/CD en Cloud Run + tu copiloto de incidentes con Gemini
 
 ---
 
@@ -23,7 +23,7 @@ GDG Hermosillo · 17 de octubre de 2026 · 2.5 horas CI/CD en Cloud Run + tu cop
 1. Cuenta de Google personal (no la del trabajo si tiene restricciones).
 2. Facturación habilitada en GCP: redime el crédito del evento con el link que te llegó por correo, o activa el [free trial](https://cloud.google.com/free) ($300 USD; pide tarjeta pero este workshop consume menos de $1 — medido).
 3. Crea tu proyecto del workshop: [console.cloud.google.com](https://console.cloud.google.com/) → selector de proyectos (arriba a la izquierda) → New project → nómbralo `cloud-cafe-tunombre` → Create. Verifica que quede ligado a tu facturación (menú ☰ → Billing; si dice que no tiene, usa Link a billing account). Anota tu Project ID (puede diferir del nombre).
-4. API key de Gemini (gratis, sin tarjeta): [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → Create API key → guárdala donde la encuentres el viernes.
+4. API key de Gemini (gratis, sin tarjeta): [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → Create API key → ⚠️ créala en un proyecto nuevo o sin facturación (la opción por default de AI Studio) — NO dentro de tu proyecto `cloud-cafe-tunombre`: en proyectos con facturación la API de Gemini es de prepago y tu key respondería `402` el sábado. Guárdala donde la encuentres.
 5. El día del evento: laptop con Chrome + cargador. Es todo. (Cuenta de GitHub: opcional — solo si al final quieres llevarte tu propia copia del repo.)
 
 ---
@@ -191,7 +191,7 @@ gcloud run services update-traffic cloud-cafe --region us-central1 \
 
 El escenario: volvió a pasar (siempre vuelve a pasar), pero ahora tienes un copiloto que lee los logs por ti.
 
-1. En la pestaña donde vas a trabajar, activa el entorno y configura tu API key (la del pre-work; si no la tienes: [aistudio.google.com/apikey](https://aistudio.google.com/apikey), 2 min, gratis):
+1. En la pestaña donde vas a trabajar, activa el entorno y configura tu API key (la del pre-work; si no la tienes: [aistudio.google.com/apikey](https://aistudio.google.com/apikey), 2 min, gratis — en un proyecto sin facturación):
 
 ```bash
 cd gdg-cloud-cafe && source .venv/bin/activate
@@ -203,7 +203,7 @@ python3 copilot/copilot.py --help
 
 ✅ CP6: ves la ayuda del copiloto sin errores.
 
-🛟 ¿Te perdiste? Error de key → exporta la variable en ESTA pestaña (cada pestaña es una sesión distinta). `ModuleNotFoundError` → te faltó el `source .venv/bin/activate`.
+🛟 ¿Te perdiste? Error de key → exporta la variable en ESTA pestaña (cada pestaña es una sesión distinta). `ModuleNotFoundError` → te faltó el `source .venv/bin/activate`. Error 402 (prepayment credits are depleted) → tu key nació en un proyecto con facturación: crea una nueva en AI Studio dentro de un proyecto sin billing y re-exporta.
 
 ---
 
@@ -230,7 +230,7 @@ python3 copilot/copilot.py --minutes 10
 
 > 🧠 Discusión: la AI es excelente leyéndose el toil (resumir logs, triage inicial); la decisión de QUÉ hacer sigue siendo tuya. Por eso se llama copiloto.
 
-🛟 ¿Te perdiste? "No encontré logs" → el loadgen no corrió contra la revisión rota: verifica el traffic split y dale 2 min más. Error 429 de la API → espera 30 seg (free tier de Gemini) y reintenta.
+🛟 ¿Te perdiste? "No encontré logs" → el loadgen no corrió contra la revisión rota: verifica el traffic split y dale 2 min más. Error 429 → espera 30 seg (free tier de Gemini) y reintenta. Error 503 → el modelo anda saturado: el copiloto reintenta solo dos veces; si persiste, dale unos segundos y vuelve a correrlo. Error 402 → tu key vive en un proyecto con facturación: crea una en un proyecto sin billing (caja de CP6).
 
 ---
 
