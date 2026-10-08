@@ -17,7 +17,7 @@
 - El paso de IAM de `setup.sh` **hace falta**: sin `run.admin`, el trigger deja el servicio privado (403)
   aunque el build salga verde (3.1).
 - **Copiloto (Brief C, sección 12): la key de Gemini tiene que ser de un proyecto SIN billing.** En uno
-  con billing (como `cloud-cafe-tunombre`), la API pide prepago y responde `402`. Diagnóstico real en ~8 s.
+  con billing (como `cloud-cafe-tunombre`), la API pide prepago y responde `402`. Diagnóstico real (errores y latencia) en ~10 s.
 
 ## 1. Tiempos reales por paso
 
@@ -309,7 +309,8 @@ El reporte de facturación tarda hasta 24 h: *Billing → Reports*, filtrado por
 ## 12. Copiloto con Gemini (Brief C)
 
 > Probado el 7 de octubre de 2026 contra el servicio real: release `v2-promos` + 3 min de `loadgen.sh`, y
-> `python3 copilot/copilot.py --minutes 10` con el venv de CP1. Salida completa en `copilot/README.md`.
+> `python3 copilot/copilot.py --minutes 10` con el venv de CP1. El 8 se agregó el filtro de latencia y se
+> volvió a probar igual (12.4). Salida completa en `copilot/README.md`.
 
 ### 12.1 ⚠️ La key de Gemini NO puede ser del proyecto del workshop
 
@@ -349,18 +350,31 @@ con instrucciones para cambiarlo, y el copiloto reintenta 2 veces si recibe un `
 | 10 KB (cada traceback una vez), thinking `low` | **3–9 s** ← la que quedó |
 
 `gcloud logging read` tarda ~1–2 s y los logs aparecen en segundos (a diferencia de las métricas, 2.8): el
-copiloto vio requests de 20 s antes. Corrida completa: **~5–12 s**.
+copiloto vio requests de 20 s antes. Con el filtro de latencia (12.4) la evidencia sube a ~19 KB (~10.5 mil
+tokens): Gemini tardó 4–14 s en 8 de 9 corridas y 46 s en una. Corrida completa: **~5–15 s**.
 
 ### 12.4 Lo que el copiloto ve (y lo que no)
 
 - El filtro del brief (WARNING o peor + requests 5xx) no incluye los requests que salen bien. Con la primera
   versión del prompt, Gemini concluía "caído para el 100% de los usuarios, SEV1", cuando falla ~1 de cada 4
   órdenes. Corregido en `PROMPT_INCIDENTE`: ahora da SEV2 y dice qué métrica revisar para confirmar.
-- **La latencia no se ve:** los requests lentos son 200 con severidad INFO. Probado aparte: agregando
-  `OR httpRequest.latency>="1s"` a `FILTRO`, el diagnóstico también menciona los 3–6 s, pero llena el tope de
-  200 entradas. No se aplicó: el filtro es decisión del brief.
+- **Latencia (agregada el 8 de octubre):** los requests lentos son 200 con severidad INFO, así que el filtro
+  del brief no los veía. Ahora `FILTRO` suma `OR httpRequest.latency>="1s"` y el prompt pide errores y
+  latencia en los síntomas. Con 3 min de loadgen (354 requests: 43 con error y 132 lentos) se llena el tope
+  de 200 entradas (19 KB; quedan las más nuevas, que cubren casi los 3 min). En 9 corridas, las 9 mencionan
+  errores y latencia. Lo que cambió con cada versión del prompt fue la hipótesis:
+  - "di si una misma causa explica las dos cosas": 3 de 6 ligan la lentitud al cambio de la v2, 2 no se
+    deciden y 1 la declara "no relacionada" (e inventa una base de datos que la app no tiene).
+  - "di qué tienen en común (endpoint, revisión, desde cuándo) y si eso apunta a una misma causa" (la que
+    quedó): 3 de 3 la ligan al promo engine con esa evidencia.
+  - Una corrida tradujo una cita (`obtain_promo` por `obtener_promo`). El prompt ahora pide el texto
+    "copiado tal cual, sin traducirlo": 0 de 6 después.
+- **Con el servicio sano** (90 s de loadgen: 178 requests, 0 lentos) no entra nada y el copiloto dice
+  "No encontré logs… ¡no hay incidente!". Ojo: un cold start de más de 1 s sí entraría al filtro; en esta
+  prueba no hubo (la revisión seguía caliente).
 - **Los comandos sugeridos pueden venir mal:** en una corrida propuso `gcloud run services update traffic`
-  (sin guion). Buen ejemplo en vivo de "hipótesis para verificar".
+  (sin guion). Buen ejemplo en vivo de "hipótesis para verificar". En las 9 corridas del 8 de octubre
+  salió bien.
 
 ### 12.5 Cambios al repo del Brief C
 
@@ -370,8 +384,10 @@ copiloto vio requests de 20 s antes. Corrida completa: **~5–12 s**.
    cual.
 3. `README.md`: la cuenta de GitHub pasa a ser opcional (ya no hay fork) y se agrega la key de Gemini a los
    pre-requisitos.
+4. **8 de octubre:** filtro de latencia y ajustes al prompt (12.4); ejemplo de `copilot/README.md` actualizado.
 
-Costo del Brief C: **$0** (key del free tier; ~5 mil tokens de entrada por diagnóstico).
+Costo del Brief C: **$0** (key del free tier; ~5 mil tokens de entrada por diagnóstico, ~10.5 mil con el
+filtro de latencia).
 
 ### 12.6 Ajustes sugeridos a la GUIA
 

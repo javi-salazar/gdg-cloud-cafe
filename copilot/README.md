@@ -4,7 +4,7 @@ Lee los logs de tu servicio de Cloud Run y le pide a Gemini un diagnóstico, com
 
 ```text
 gcloud logging read  ──►  copilot.py  ──►  Gemini (API REST)  ──►  diagnóstico en tu terminal
- (errores + 5xx)          (los resume)       (PROMPT_INCIDENTE)
+ (errores, 5xx, lentos)   (los resume)       (PROMPT_INCIDENTE)
 ```
 
 ## Setup en 3 pasos
@@ -32,47 +32,47 @@ gcloud logging read  ──►  copilot.py  ──►  Gemini (API REST)  ──
 
 ## Ejemplo de salida
 
-Real, del ensayo del 7 de octubre de 2026: release `v2-promos` en producción y 3 minutos de `loadgen.sh`.
+Real, del ensayo del 8 de octubre de 2026: release `v2-promos` en producción, 3 minutos de `loadgen.sh` y
+`--minutes 15`.
 
 ```text
-🤖 Copiloto de incidentes · cloud-cafe · últimos 10 min
+🤖 Copiloto de incidentes · cloud-cafe · últimos 15 min
 📥 Leyendo logs con gcloud logging read...
-🧠 Le mando 106 entradas (10 KB) a gemini-3.5-flash...
+🧠 Le mando 200 entradas (19 KB) a gemini-3.5-flash...
 
 🔥 Resumen
-El servicio cloud-cafe presenta fallas al procesar compras en el endpoint POST /api/order, devolviendo respuestas 500 y afectando a los usuarios que intentan ordenar café.
+El endpoint POST /api/order presenta errores 500 intermitentes y alta latencia en la revisión cloud-cafe-00002-rxc.
+Esto afecta a los usuarios que intentan realizar compras de café a través de la aplicación.
 
 📊 Síntomas observados
-- Errores HTTP 500 persistentes en la ruta POST /api/order.
-- Se observan más de 50 fallas en una ventana de 3 minutos (de 04:02:19 a 04:05:10 UTC).
-- Los fallos ocurren exclusivamente en la revisión cloud-cafe-00002-rxc con la versión release v2-promos.
-- La falla impacta múltiples tipos de bebidas (americano, espresso, cafe_de_olla, latte, cold_brew).
+- Errores: Múltiples respuestas HTTP 500 rápidas (de 3 a 5 ms) en POST /api/order desde las 19:19:13 UTC, asociadas al mensaje "La orden de [producto] falló: promo engine crashed" en la revisión cloud-cafe-00002-rxc (release v2-promos).
+- Latencia: Múltiples peticiones POST /api/order con respuesta 200 OK tardan entre 3.0 y 6.0 segundos, experimentando una lentitud crítica en la misma revisión.
 
 🧠 Hipótesis de causa raíz
-La nueva lógica de promociones introducida en la versión v2-promos tiene un error de ejecución que provoca la caída sistemática del flujo de órdenes. Esto se evidencia en la traza donde la función obtener_promo genera una excepción al invocar un "raise RuntimeError("promo engine crashed")" que resulta en el mensaje "RuntimeError: promo engine crashed" dentro de /app/main.py.
+La nueva lógica de promociones en la revisión cloud-cafe-00002-rxc (release v2-promos) tiene un bug de software que interrumpe la ejecución del código, respaldado por "RuntimeError: promo engine crashed". Ambos síntomas (errores 500 y latencia de hasta 6 segundos) ocurren simultáneamente en el endpoint "POST /api/order" bajo la misma revisión, sugiriendo que la integración del motor de promociones ("promo_pct": obtener_promo(cafe["id"])) genera bloqueos que ralentizan las órdenes exitosas y colapsa directamente con un "RuntimeError" en ciertos casos.
 
 ✅ Acción inmediata sugerida
-Mitigar el impacto realizando un rollback inmediato al 100% del tráfico hacia una revisión anterior que no contenga el release v2-promos.
+Mitigar inmediatamente el impacto desviando el 100% del tráfico de Cloud Run hacia una revisión previa que se conozca como estable (REVISION-SANA).
 Comando de gcloud:
 gcloud run services update-traffic cloud-cafe --to-revisions=REVISION-SANA=100 --region=us-central1
 
 ⚠️ Severidad estimada
-SEV2 - Degradación seria para muchos usuarios. El endpoint de creación de órdenes falla de forma constante, impidiendo compras. No se cataloga como SEV1 porque no disponemos del volumen total de transacciones para confirmar si afecta a la totalidad de los usuarios. Para corroborar el porcentaje de impacto real, se debe revisar la métrica run.googleapis.com/request_count agrupada por response_code_class en Cloud Monitoring.
+SEV2 - Degradación seria para muchos usuarios. No es SEV1 porque el servicio no está totalmente caído (aún se procesan peticiones 200 OK), pero el flujo principal de compras está severamente degradado por fallas y lentitud extrema. Para confirmar el porcentaje exacto de transacciones afectadas, se debe revisar la métrica de "Request count" agrupada por código de estado en Cloud Monitoring.
 
 Esto es una hipótesis para verificar, no un veredicto.
 
-⏱️  gemini-3.5-flash respondió en 8.2 s (5289 tokens de entrada)
+⏱️  gemini-3.5-flash respondió en 10.4 s (10499 tokens de entrada)
 ```
 
 En tu terminal sale con colores. Cada corrida redacta distinto: Gemini no responde dos veces igual.
 
 ## Cómo funciona (y qué puedes cambiar)
 
-- **Los logs.** `gcloud logging read` con `FILTRO`: severidad WARNING o peor, más los requests 5xx del request log de Cloud Run, de los últimos N minutos. Como máximo 200 entradas o ~30 KB, y cada traceback repetido viaja una sola vez.
+- **Los logs.** `gcloud logging read` con `FILTRO`: severidad WARNING o peor, más los requests del request log de Cloud Run que terminaron en 5xx o tardaron 1 s o más, de los últimos N minutos. Como máximo 200 entradas o ~30 KB (quedan las más nuevas), y cada traceback repetido viaja una sola vez.
 - **El prompt.** `PROMPT_INCIDENTE`, en español. Edítalo y vuelve a correr: pídele formato de postmortem, o que responda como pirata 🏴‍☠️.
 - **El modelo.** `MODEL` (`gemini-3.5-flash`). Para cambiarlo, usa otro nombre de [la lista oficial](https://ai.google.dev/gemini-api/docs/models).
-- **Costo.** $0 con una key del free tier (~5 mil tokens por diagnóstico).
-- **Sus límites.** Solo ve errores: no sabe qué porcentaje del tráfico falla ni ve la latencia de los requests que sí salen bien. Y da hipótesis, no veredictos: verifica antes de copiar y pegar un comando que te sugiera.
+- **Costo.** $0 con una key del free tier (~10 mil tokens por diagnóstico).
+- **Sus límites.** Solo ve errores y requests lentos: los rápidos que salen bien no viajan, así que no sabe qué porcentaje del tráfico falla. Y da hipótesis, no veredictos: verifica antes de copiar y pegar un comando que te sugiera.
 
 ## Si algo falla
 
