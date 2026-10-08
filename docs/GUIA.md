@@ -1,4 +1,4 @@
-<!-- GUIA.md v2 — incorpora los hallazgos del Brief B (E2E real en gdg-cloud-cafe-test): clone directo sin fork, setup.sh movido a CP0, CP3 = demo del trigger + pipeline manual de asistentes (NO-GO a OAuth ×40), tiempos reales, gotcha del 0% de tráfico post-rollback, venv e identidad de git. PENDIENTE: ensayo literal del Brief D en Cloud Shell real (validar venv/pip externally-managed y el comando de uvicorn). -->
+<!-- GUIA.md v2.1 — 8-oct-2026. Cambios sobre v2 (hallazgos post-Brief B): (1) pre-work ahora incluye crear proyecto + ligar billing (CP0 conserva el fallback para quien no lo hizo); (2) CP2 documenta el prompt "Do you want to continue (Y/n)?" del primer deploy --source; (3) limpieza vía scripts/cleanup.sh — NOTA para Brief D: cleanup.sh debe borrar también los repos de Artifact Registry (cloud-cafe y cloud-run-source-deploy) y el bucket de sources del build. PENDIENTE: ensayo literal del Brief D. -->
 
 # ☕ Ship it, Break it, Fix it — Guía del workshop
 
@@ -22,20 +22,19 @@ GDG Hermosillo · 17 de octubre de 2026 · 2.5 horas CI/CD en Cloud Run + tu cop
 
 1. Cuenta de Google personal (no la del trabajo si tiene restricciones).
 2. Facturación habilitada en GCP: redime el crédito del evento con el link que te llegó por correo, o activa el [free trial](https://cloud.google.com/free) ($300 USD; pide tarjeta pero este workshop consume menos de $1 — medido).
-3. API key de Gemini (gratis, sin tarjeta): [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → Create API key → guárdala donde la encuentres el viernes.
-4. El día del evento: laptop con Chrome + cargador. Es todo. (Cuenta de GitHub: opcional — solo si al final quieres llevarte tu propia copia del repo.)
+3. Crea tu proyecto del workshop: [console.cloud.google.com](https://console.cloud.google.com/) → selector de proyectos (arriba a la izquierda) → New project → nómbralo `cloud-cafe-tunombre` → Create. Verifica que quede ligado a tu facturación (menú ☰ → Billing; si dice que no tiene, usa Link a billing account). Anota tu Project ID (puede diferir del nombre).
+4. API key de Gemini (gratis, sin tarjeta): [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → Create API key → guárdala donde la encuentres el viernes.
+5. El día del evento: laptop con Chrome + cargador. Es todo. (Cuenta de GitHub: opcional — solo si al final quieres llevarte tu propia copia del repo.)
 
 ---
 
 ## CP0 — Despega tu entorno (al llegar)
 
-1. Entra a [console.cloud.google.com](https://console.cloud.google.com/) con tu cuenta.
+1. Entra a [console.cloud.google.com](https://console.cloud.google.com/) y selecciona tu proyecto `cloud-cafe-tunombre` (el del pre-work). ¿No lo creaste? Sin drama, son 2 minutos: paso 3 del pre-work, aquí arriba.
 
-2. Crea un proyecto nuevo: selector de proyectos (arriba a la izquierda) → New project → nómbralo `cloud-cafe-tunombre` → Create. Selecciónalo y anota el Project ID (puede diferir del nombre).
+2. Abre Cloud Shell: icono de terminal `>_` arriba a la derecha de la consola → Continue → autoriza.
 
-3. Abre Cloud Shell: icono de terminal `>_` arriba a la derecha de la consola → Continue → autoriza.
-
-4. Clona el repo del workshop, preséntate con git y prepara tu proyecto (el `setup.sh` habilita las APIs y deja todo listo — tarda ~1 min):
+3. Clona el repo del workshop, preséntate con git y prepara tu proyecto (el `setup.sh` habilita las APIs y deja todo listo — tarda ~1 min):
 
 ```bash
 git clone https://github.com/javi-salazar/gdg-cloud-cafe.git
@@ -51,7 +50,7 @@ gcloud config set project TU_PROJECT_ID
 
 🛟 ¿Te perdiste?
 
-* `verify.sh` marca ❌ en billing → tu proyecto no tiene facturación: consola → Billing → Link a billing account (elige la del crédito/trial), y corre `setup.sh` de nuevo.
+* `verify.sh` marca ❌ en billing → tu proyecto no tiene facturación: consola → Billing → Link a billing account (la del crédito/trial), y corre `setup.sh` de nuevo.
 * Cualquier otro ❌ → `setup.sh` y `verify.sh` son seguros de repetir las veces que haga falta.
 
 ---
@@ -86,6 +85,8 @@ Un solo comando construye tu contenedor, lo sube y lo publica:
 gcloud run deploy cloud-cafe --source . --region us-central1 --allow-unauthenticated
 ```
 
+> ✋ La primera vez te va a preguntar `Do you want to continue (Y/n)?` — quiere crear el repositorio donde guardará tus imágenes. Responde `Y` y Enter.
+
 El primer deploy tarda ~1–2 min. Mientras corre, abre en la consola Cloud Build → History: eso que ves es tu código convirtiéndose en imagen y desplegándose — un pipeline de una tecla.
 
 Al terminar te da una URL `https://cloud-cafe-....run.app`. Ábrela. Ese es TU servicio en producción: HTTPS, infraestructura de Google, y escala a cero cuando nadie lo usa (por eso cuesta ~$0).
@@ -102,7 +103,7 @@ Al terminar te da una URL `https://cloud-cafe-....run.app`. Ábrela. Ese es TU s
 
 ## CP3 — El pipeline: de `git push` a producción
 
-Primero mira la demo 👀: el facilitador va a conectar su repo a Cloud Build con un trigger — a partir de ahí, cada `git push` a `main` construye y despliega solo, sin tocar gcloud. Eso es CI/CD completo, y queda documentado en esta guía para que lo montes en casa con calma (requiere autorizar la GitHub App, ~10 min la primera vez).
+Primero mira la demo 👀: el facilitador va a conectar su repo a Cloud Build con un trigger — a partir de ahí, cada `git push` a `main` construye y despliega solo, sin tocar gcloud. Eso es CI/CD completo, y queda documentado en el anexo de esta guía para que lo montes en casa con calma (requiere autorizar la GitHub App, ~10 min la primera vez).
 
 Ahora tú, con tu "pipeline manual" (mismo resultado, lo disparas tú): personaliza tu café y vuelve a desplegar.
 
@@ -238,17 +239,23 @@ python3 copilot/copilot.py --minutes 10
 * Canary release: manda 90/10 entre la revisión sana y la rota (`--to-revisions SANA=90,ROTA=10`) y observa en el loadgen cómo solo ~1 de cada 10 órdenes sufre. Así se prueba un release con el 10% de los usuarios.
 * El fix de verdad: `git merge origin/demo/fixed`, deploy con `--source`, y libera el tráfico (`--to-latest` — la regla de la casa de CP5). Badge `v2.1-promos-fixed`, 0 errores. El ciclo completo: ship → break → rollback → fix → ship.
 * Hackea a tu copiloto: edita `PROMPT_INCIDENTE` en `copilot/copilot.py` (pídele formato de postmortem, o que responda como pirata 🏴‍☠️) y vuelve a correrlo.
-* Llévate tu copia: haz fork del repo a tu cuenta de GitHub (desmarca "Copy the `main` branch only" para llevarte también las ramas del demo) y monta el trigger de Cloud Build con calma en casa — los pasos están abajo en el anexo.
+* Llévate tu copia: haz fork del repo a tu cuenta de GitHub (desmarca "Copy the `main` branch only" para llevarte también las ramas del demo) y monta el trigger de Cloud Build con calma en casa — pasos en el anexo.
 
 ---
 
 ## 🧹 Limpieza (importante si usaste free trial)
 
-Lo de hoy cuesta ~$0 dentro del free tier (medido: $0.06 sin él), pero si quieres dejar todo impecable:
+Lo de hoy cuesta ~$0 dentro del free tier (medido: $0.06 sin él). Para dejar todo impecable:
 
 ```bash
-gcloud run services delete cloud-cafe --region us-central1 --quiet
-# o la opción nuclear: borrar el proyecto completo
+./scripts/cleanup.sh
+```
+
+(Borra el servicio, las imágenes de Artifact Registry —incluido el repo `cloud-run-source-deploy` que creó el deploy— y los buckets del build, con confirmación antes de cada cosa.)
+
+O la opción nuclear, que borra absolutamente todo:
+
+```bash
 gcloud projects delete TU_PROJECT_ID
 ```
 
