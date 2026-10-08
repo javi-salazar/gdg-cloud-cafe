@@ -274,7 +274,7 @@ El reporte de facturación tarda hasta 24 h: *Billing → Reports*, filtrado por
 
 ## 10. Ajustes sugeridos a la GUIA v1
 
-> **Estado en la GUIA v2.2:** ya incorpora los 10 puntos. La limpieza del punto 10 vive en
+> **Estado en la GUIA v2.3:** ya incorpora los 10 puntos. La limpieza del punto 10 vive en
 > `scripts/cleanup.sh`, que llega en el Brief D.
 
 1. **CP0:** `verify.sh` marca ❌ en las APIs hasta correr `setup.sh` (que está en CP2), así que el checkpoint
@@ -394,8 +394,8 @@ filtro de latencia).
 
 ### 12.6 Ajustes sugeridos a la GUIA
 
-> **Estado en la GUIA v2.2:** incorpora el 1 y el 2. El 3 y el 4 salieron al revisar la v2.2 y siguen
-> pendientes.
+> **Estado en la GUIA v2.3:** incorpora los 4 (el 3 y el 4 salieron al revisar la v2.2). El ✅ de CP6 coincide
+> textual con lo que imprime `--check`.
 
 1. **Pre-work 4:** crear la key en un proyecto nuevo o sin facturación, NO en `cloud-cafe-tunombre` (12.1).
    Y "guárdala donde la encuentres **el viernes**": el 17 de octubre de 2026 es **sábado**.

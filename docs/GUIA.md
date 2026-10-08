@@ -1,4 +1,4 @@
-<!-- GUIA.md v2.2 — 8-oct-2026. Cambios sobre v2.1 (hallazgos del Brief C): (1) la API key de Gemini DEBE crearse en un proyecto sin facturación (en proyectos con billing la API es prepago → 402); (2) 402 y 503 agregados a los 🛟 de CP6/CP7; (3) el 17-oct es SÁBADO, no viernes (corregido en todo el texto). El copiloto usa gemini-3.5-flash con 2 reintentos ante 503 y filtro de errores + latencia. PENDIENTE: ensayo literal del Brief D. -->
+<!-- GUIA.md v2.3 — 8-oct-2026. Cambios sobre v2.2: (1) CP6 valida la key con `copilot.py --check` (llamada mínima real a Gemini; --help no probaba nada y los errores 402/key inválida aparecían hasta CP7); (2) `cd ~/gdg-cloud-cafe` en CP4 y CP6 para que funcione desde cualquier pestaña/ carpeta. Requiere el commit del flag --check en el copiloto. PENDIENTE: ensayo literal del Brief D. -->
 
 # ☕ Ship it, Break it, Fix it — Guía del workshop
 
@@ -138,7 +138,7 @@ gcloud run deploy cloud-cafe --source . --region us-central1
 Mientras despliega, abre otra pestaña de Cloud Shell (botón `+`) y genera tráfico de clientes:
 
 ```bash
-cd gdg-cloud-cafe
+cd ~/gdg-cloud-cafe
 ./scripts/loadgen.sh https://TU-URL.run.app
 ```
 
@@ -194,14 +194,14 @@ El escenario: volvió a pasar (siempre vuelve a pasar), pero ahora tienes un cop
 1. En la pestaña donde vas a trabajar, activa el entorno y configura tu API key (la del pre-work; si no la tienes: [aistudio.google.com/apikey](https://aistudio.google.com/apikey), 2 min, gratis — en un proyecto sin facturación):
 
 ```bash
-cd gdg-cloud-cafe && source .venv/bin/activate
+cd ~/gdg-cloud-cafe && source .venv/bin/activate
 export GEMINI_API_KEY="pega-tu-key-aquí"
-python3 copilot/copilot.py --help
+python3 copilot/copilot.py --check
 ```
 
-(La key vive solo en tu sesión de Cloud Shell; no queda guardada en ningún archivo.)
+(La key vive solo en tu sesión de Cloud Shell; no queda guardada en ningún archivo. El `--check` hace una llamada mínima real a Gemini para confirmar que tu key sirve — mejor enterarte ahora que durante el incidente.)
 
-✅ CP6: ves la ayuda del copiloto sin errores.
+✅ CP6: el copiloto confirma "key válida — Gemini respondió".
 
 🛟 ¿Te perdiste? Error de key → exporta la variable en ESTA pestaña (cada pestaña es una sesión distinta). `ModuleNotFoundError` → te faltó el `source .venv/bin/activate`. Error 402 (prepayment credits are depleted) → tu key nació en un proyecto con facturación: crea una nueva en AI Studio dentro de un proyecto sin billing y re-exporta.
 
