@@ -1,4 +1,4 @@
-<!-- GUIA.md v2.3 — 8-oct-2026. Cambios sobre v2.2: (1) CP6 valida la key con `copilot.py --check` (llamada mínima real a Gemini; --help no probaba nada y los errores 402/key inválida aparecían hasta CP7); (2) `cd ~/gdg-cloud-cafe` en CP4 y CP6 para que funcione desde cualquier pestaña/ carpeta. Requiere el commit del flag --check en el copiloto. PENDIENTE: ensayo literal del Brief D. -->
+<!-- GUIA.md v2.3.1 — v2.3 + 429/503 en el 🛟 de CP6 (--check ya llama a Gemini) -->
 
 # ☕ Ship it, Break it, Fix it — Guía del workshop
 
@@ -203,7 +203,7 @@ python3 copilot/copilot.py --check
 
 ✅ CP6: el copiloto confirma "key válida — Gemini respondió".
 
-🛟 ¿Te perdiste? Error de key → exporta la variable en ESTA pestaña (cada pestaña es una sesión distinta). `ModuleNotFoundError` → te faltó el `source .venv/bin/activate`. Error 402 (prepayment credits are depleted) → tu key nació en un proyecto con facturación: crea una nueva en AI Studio dentro de un proyecto sin billing y re-exporta.
+🛟 ¿Te perdiste? Error de key → exporta la variable en ESTA pestaña (cada pestaña es una sesión distinta). `ModuleNotFoundError` → te faltó el `source .venv/bin/activate`. Error 402 (prepayment credits are depleted) → tu key nació en un proyecto con facturación: crea una nueva en AI Studio dentro de un proyecto sin billing y re-exporta. **Error 429/503** → mismos rescates que la caja de CP7.
 
 ---
 
