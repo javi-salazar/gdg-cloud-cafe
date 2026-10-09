@@ -1,6 +1,8 @@
 # Ship it, Break it, Fix it ☕
 
-**CI/CD en Cloud Run + un copiloto de incidentes con Gemini** · Workshop hands-on de GDG Hermosillo · 17 de octubre de 2026
+**CI/CD en Cloud Run + un copiloto de incidentes con Gemini** · Workshop hands-on de GDG Hermosillo · sábado 17 de octubre de 2026
+
+👉 **[Abre la guía paso a paso](docs/GUIA.md)** · [Problemas comunes](docs/GOTCHAS.md) · [El copiloto](copilot/README.md)
 
 Vas a desplegar *Cloud Café*, una pequeña app de FastAPI, a Cloud Run con un pipeline de Cloud Build.
 Luego la vas a romper con un release malo y vas a hacer rollback en segundos.
@@ -19,19 +21,19 @@ Al final, un copiloto con Gemini va a leer los logs y te va a ayudar a diagnosti
 
 ¿Ya tienes todo? En Cloud Shell, dentro del repo clonado, corre `./scripts/verify.sh`.
 
-## Guía paso a paso
-
-👉 **[docs/GUIA.md](docs/GUIA.md)** · Problemas comunes: [docs/GOTCHAS.md](docs/GOTCHAS.md)
-
 ## ¿Qué hay en este repo?
 
 ```text
 app/             la app Cloud Café (FastAPI + una página HTML)
 Dockerfile       cómo se empaqueta la app en un contenedor
 cloudbuild.yaml  el pipeline: build → push → deploy a Cloud Run
-scripts/         setup.sh, verify.sh y loadgen.sh
+scripts/         setup.sh, verify.sh, loadgen.sh y cleanup.sh
 copilot/         el copiloto de incidentes con Gemini
 docs/            la guía y los gotchas
 ```
 
 Ramas: `main` (v1, estable) · `demo/bad-release` (v2 con promociones, roto a propósito) · `demo/fixed` (v2.1 con el fix)
+
+## Al terminar
+
+`./scripts/cleanup.sh` borra lo que creaste en el workshop (servicio, imágenes y buckets del build) y te pregunta antes de cada cosa.
