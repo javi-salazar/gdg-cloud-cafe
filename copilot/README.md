@@ -88,4 +88,4 @@ En tu terminal sale con colores. Cada corrida redacta distinto: Gemini no respon
 | `No encontré logs` | Genera tráfico ~2 min con `./scripts/loadgen.sh` y revisa que el tráfico vaya a la revisión rota. |
 | `Gemini respondió 402` | Tu key es de un proyecto con facturación: crea otra en uno sin facturación. |
 | `Gemini respondió 429` | Límite del free tier: espera ~30 s y reintenta. |
-| `Gemini respondió 503` | Gemini está saturado. El copiloto ya reintentó 2 veces; espera un minuto. |
+| `Gemini respondió 503` | Gemini está saturado. El copiloto ya reintentó 2 veces; dale unos segundos y vuelve a correrlo. |

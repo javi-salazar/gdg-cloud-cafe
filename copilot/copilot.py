@@ -93,7 +93,8 @@ PISTAS = {
          "   en un proyecto SIN facturación.",
     404: f"El modelo '{MODEL}' no existe o ya se retiró: cambia MODEL arriba de este archivo.",
     429: "Llegaste al límite del free tier: espera ~30 s y reintenta.",
-    503: "Gemini sigue saturado: reintenta en un minuto, o cambia MODEL arriba de este archivo.",
+    503: "Gemini sigue saturado: dale unos segundos y vuelve a correrlo.\n"
+         "   Si no se compone, cambia MODEL arriba de este archivo.",
 }
 
 # --- Colores ANSI (se apagan solos si la salida no es una terminal) ----------
