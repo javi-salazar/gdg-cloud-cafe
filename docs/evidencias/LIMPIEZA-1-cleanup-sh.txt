@@ -1,0 +1,56 @@
+# 🧹 Limpieza — ./scripts/cleanup.sh en gdg-cloud-cafe-dry al terminar el ensayo (respuestas: s a todo; incluye 2 triggers de prueba, uno global y uno regional)
+🧹 Limpieza del proyecto: gdg-cloud-cafe-dry
+   Te pregunto antes de borrar cada cosa (Enter = no la borres).
+
+[1/4] Servicio 'cloud-cafe' de Cloud Run (us-central1)
+      Existe: https://cloud-cafe-aad4inpcea-uc.a.run.app
+Deleting [cloud-cafe]...
+.....................done.
+Deleted service [cloud-cafe].
+      ✅ Borrado
+
+[2/4] Triggers de Cloud Build
+      Existe: prueba-cleanup-global (global)
+Deleted [projects/gdg-cloud-cafe-dry/locations/global/triggers/prueba-cleanup-global].
+      ✅ Borrado
+      Existe: prueba-cleanup-regional (us-central1)
+Deleted [projects/gdg-cloud-cafe-dry/locations/us-central1/triggers/prueba-cleanup-regional].
+      ✅ Borrado
+
+[3/4] Repositorios de imágenes en Artifact Registry (us-central1)
+      Existe: cloud-cafe
+Delete request issued for: [cloud-cafe]
+Waiting for operation [projects/gdg-cloud-cafe-dry/locations/us-central1/operations/9cdba21d-b906-4b7b-b21d-4dc1444b7438] to complete...
+......done.
+Deleted repository [cloud-cafe].
+      ✅ Borrado
+      Existe: cloud-run-source-deploy
+Delete request issued for: [cloud-run-source-deploy]
+Waiting for operation [projects/gdg-cloud-cafe-dry/locations/us-central1/operations/5a778045-1173-4a4c-9d21-05e5ea43887e] to complete...
+......done.
+Deleted repository [cloud-run-source-deploy].
+      ✅ Borrado
+
+[4/4] Buckets con el código fuente de tus builds
+      Existe: gs://run-sources-gdg-cloud-cafe-dry-us-central1
+Removing objects:
+  
+Removing gs://run-sources-gdg-cloud-cafe-dry-us-central1/services/cloud-cafe/1791507181.422425-a1e329b350664baaa8549d97efc73f76.zip#1791507181737421...
+Removing gs://run-sources-gdg-cloud-cafe-dry-us-central1/services/cloud-cafe/1791507328.447975-828002a2dea548c8ac4a65331e5fbde5.zip#1791507328560384...
+Removing gs://run-sources-gdg-cloud-cafe-dry-us-central1/services/cloud-cafe/1791507416.005343-b7c45b6fdf194a58894d03057bded026.zip#1791507416120668...
+Removing gs://run-sources-gdg-cloud-cafe-dry-us-central1/services/cloud-cafe/1791508472.553582-e1535eb5330745349c16d00ce0d4e3ce.zip#1791508472862929...
+.
+Removing buckets:
+  
+Removing gs://run-sources-gdg-cloud-cafe-dry-us-central1/...
+...
+      ✅ Borrado
+
+📋 Lo que queda en gdg-cloud-cafe-dry:
+   Servicios de Cloud Run:      0
+   Triggers de Cloud Build:     0
+   Repos de Artifact Registry:  0
+   Buckets de builds:           0
+
+🎉 Listo: borré 6 cosa(s). Ya no queda nada del workshop que te cobre.
+   ¿Quieres volver a empezar? Desde CP0: ./scripts/setup.sh

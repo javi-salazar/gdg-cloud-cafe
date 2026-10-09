@@ -1,0 +1,6 @@
+# Builds de Cloud Build (us-central1) del ensayo en gdg-cloud-cafe-dry, 8/9-oct-2026, horas UTC
+build      inicio     duración  estado   etapa
+9963134c   00:53:02       23s  SUCCESS  CP2 primer deploy (v1)
+d073431c   00:55:29       23s  SUCCESS  CP3 café de Ana
+8bc90378   00:56:56       24s  SUCCESS  CP4 release v2 (roto)
+0add83a2   01:14:33       22s  SUCCESS  BONUS fix v2.1

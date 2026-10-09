@@ -1,0 +1,25 @@
+[1m🤖 Copiloto de incidentes · cloud-cafe · últimos 10 min[0m
+[2m📥 Leyendo logs con gcloud logging read...[0m
+[2m🧠 Le mando 200 entradas (19 KB) a gemini-3.5-flash...[0m
+
+[1;31m🔥 Resumen[0m
+El endpoint de creación de órdenes está fallando con errores 500 y latencia severa (más de 3 segundos), afectando a los usuarios que intentan realizar pedidos en la revisión cloud-cafe-00003-2r9.
+
+[1;36m📊 Síntomas observados[0m
+- Errores: Múltiples respuestas HTTP 500 (más de 30 registradas) en el endpoint POST /api/order desde las 01:02:45 UTC, afectando a la revisión cloud-cafe-00003-2r9 (release v2-promos).
+- Latencia: Decenas de requests exitosos (HTTP 200) lentos en el mismo endpoint, tardando de manera consistente entre 3.03 y 5.97 segundos.
+
+[1;35m🧠 Hipótesis de causa raíz[0m
+Tanto los errores 500 como la alta latencia comparten el endpoint POST /api/order en la revisión cloud-cafe-00003-2r9 desde las 01:02:45. La causa de los errores es un bug en el motor de promociones introducido en esta versión, como lo demuestra el traceback: "RuntimeError: promo engine crashed" en la llamada "promo_pct": obtener_promo(cafe["id"]),  # NUEVO en v2". Los requests lentos que sí terminan en 200 sugieren que cuando el motor de promociones no falla, su procesamiento (o el del backend) degrada severamente la latencia del servicio de manera colateral.
+
+[1;32m✅ Acción inmediata sugerida[0m
+Hacer un rollback inmediato a una revisión anterior que sea estable para mitigar tanto las fallas como la latencia.
+gcloud run services update-traffic cloud-cafe --to-revisions=REVISION-SANA=100 --region=us-central1
+
+[1;33m⚠️ Severidad estimada[0m
+SEV2. Hay una degradación muy seria del servicio con errores del 100% para las órdenes que disparan el bug y una latencia inaceptable (>3s) para las exitosas. No se clasifica como SEV1 porque no podemos determinar si afecta al 100% del tráfico general al no disponer de los logs de transacciones rápidas y exitosas.
+
+[1;33mEsto es una hipótesis para verificar, no un veredicto.[0m
+[2m
+⏱️  gemini-3.5-flash respondió en 3.4 s (10540 tokens de entrada)[0m
+

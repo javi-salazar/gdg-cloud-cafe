@@ -1,0 +1,29 @@
+# BONUS — "Hackea a tu copiloto": PROMPT_INCIDENTE + "Responde como pirata 🏴‍☠️" (copia temporal), --minutes 20, exit 0
+
+🤖 Copiloto de incidentes · cloud-cafe · últimos 20 min
+📥 Leyendo logs con gcloud logging read...
+🧠 Le mando 200 entradas (19 KB) a gemini-3.5-flash...
+
+🔥 Resumen
+¡Al abordaje! El motor de promociones está haciendo agua en la revisión cloud-cafe-00003-2r9, provocando errores 500 y alta latencia.
+Afecta a los tripulantes que intentan registrar sus pedidos mediante el endpoint POST /api/order en la release v2-promos.
+
+📊 Síntomas observados
+- Se observan múltiples errores 500 en el endpoint POST /api/order que fallan velozmente en menos de 0.04 segundos en la revisión cloud-cafe-00003-2r9.
+- Fuerte degradación del servicio con peticiones exitosas (200 OK) sumamente lentas, tardando entre 3.0 y 7.8 segundos en el mismo endpoint POST /api/order.
+- Los errores y la lentitud se vienen presentando desde las 01:07:38 UTC hasta las 01:12:30 UTC en la release v2-promos.
+
+🧠 Hipótesis de causa raíz
+La nueva función de descuentos introducida en la release v2-promos está maldita. El código falla al invocar la función obtener_promo, lo cual se confirma con el reporte exacto del log: "RuntimeError: promo engine crashed". Tanto las peticiones lentas como los errores 500 ocurren en la misma revisión cloud-cafe-00003-2r9 y el mismo endpoint "POST /api/order", lo que sugiere que el nuevo motor de promociones genera un cuello de botella masivo antes de tronar o finalizar la orden.
+
+✅ Acción inmediata sugerida
+¡Izad las velas de retirada! Debemos mitigar de inmediato redirigiendo el tráfico de regreso a una revisión anterior que no tenga este código maldito. Ejecutad este comando en vuestras terminales:
+gcloud run services update-traffic cloud-cafe --to-revisions=REVISION-SANA=100 --region=us-central1
+Luego del repliegue, podremos analizar el archivo /app/main.py en un entorno seguro de desarrollo.
+
+⚠️ Severidad estimada
+SEV2 - Degradación seria para la tripulación. No es un SEV1 porque las bitácoras demuestran que aún entran algunas órdenes con éxito (200 OK), pero la experiencia de usuario está seriamente comprometida por el impacto en latencia y los errores intermitentes. Recomiendo verificar la tasa exacta de fallos contra peticiones totales en el tablero de Cloud Monitoring para confirmar el porcentaje real de daño.
+
+Esto es una hipótesis para verificar, no un veredicto.
+
+⏱️  gemini-3.5-flash respondió en 10.4 s (10542 tokens de entrada)

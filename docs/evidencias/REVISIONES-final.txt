@@ -1,0 +1,5 @@
+# Revisiones de cloud-cafe al final del ensayo (horas UTC)
+cloud-cafe-00001-v27   creada 00:53:26  v1-estable
+cloud-cafe-00002-s28   creada 00:55:54  v1-estable (Café de Ana)
+cloud-cafe-00003-2r9   creada 00:57:22  v2-promos (rota)
+cloud-cafe-00004-mbj   creada 01:14:59  v2.1-promos-fixed

@@ -1,0 +1,3 @@
+# CP6 — copilot.py --check con una key válida (proyecto sin facturación), desde la laptop. exit 0
+🔑 Probando tu key con gemini-3.5-flash...
+✅ key válida — Gemini respondió

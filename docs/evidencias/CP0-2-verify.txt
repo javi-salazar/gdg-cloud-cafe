@@ -1,0 +1,11 @@
+🔎 Revisando los pre-requisitos del workshop...
+
+✅ gcloud autenticado como [correo tapado]
+✅ Proyecto configurado: gdg-cloud-cafe-dry
+✅ Billing activo
+✅ API habilitada: run.googleapis.com
+✅ API habilitada: cloudbuild.googleapis.com
+✅ API habilitada: artifactregistry.googleapis.com
+✅ API habilitada: logging.googleapis.com
+
+🎉 ¡Listo para el workshop!

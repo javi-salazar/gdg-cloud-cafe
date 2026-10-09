@@ -1,0 +1,18 @@
+# CP5 — un traceback del promo engine tal como lo guarda Cloud Logging (horas UTC)
+timestamp: 2026-10-09T01:12:17.012449Z
+severity:  ERROR
+revision:  cloud-cafe-00003-2r9
+release:   v2-promos
+message:
+La orden de espresso falló: promo engine crashed
+Traceback (most recent call last):
+  File "/app/main.py", line 132, in ordenar
+    orden = preparar_orden(cafe)
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/app/main.py", line 88, in preparar_orden
+    "promo_pct": obtener_promo(cafe["id"]),  # NUEVO en v2
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/main.py", line 77, in obtener_promo
+    raise RuntimeError("promo engine crashed")  # ...el motor truena 💥
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: promo engine crashed
