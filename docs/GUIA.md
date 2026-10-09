@@ -1,4 +1,4 @@
-<!-- GUIA.md v2.3.1 — v2.3 + 429/503 en el 🛟 de CP6 (--check ya llama a Gemini) -->
+<!-- GUIA.md v2.4 — 9-oct-2026. CANDIDATA A FINAL: integra los hallazgos del ensayo literal del Brief D. Cambios sobre v2.3.1: nombres actuales de la consola en CP5 (Observability → Metrics/Logs; Revision History), rango "Last 30 minutes" en Metrics, volver de edit con Open Terminal (CP3), h1 como objetivo del cambio (CP3), tip de URL con describe (CP4), rescate de conflicto eliminado (CP4 — no puede ocurrir), quota de billing 5/5 en 🛟 CP0, advertencia del botón "Create Gemini API key" de la consola (pre-work 4), reword de reconexión de Cloud Shell (🛟 CP2), reword de la regla de la casa (el mensaje engañoso sale en el deploy SIGUIENTE), merge --no-edit y canary completo + relanzar loadgen (bonus), nota de URL en formato viejo (CP5). Se congela el vie 16 salvo hallazgos del dry run. -->
 
 # ☕ Ship it, Break it, Fix it — Guía del workshop
 
@@ -23,7 +23,7 @@ GDG Hermosillo · sábado 17 de octubre de 2026 · 2.5 horas CI/CD en Cloud Run 
 1. Cuenta de Google personal (no la del trabajo si tiene restricciones).
 2. Facturación habilitada en GCP: redime el crédito del evento con el link que te llegó por correo, o activa el [free trial](https://cloud.google.com/free) ($300 USD; pide tarjeta pero este workshop consume menos de $1 — medido).
 3. Crea tu proyecto del workshop: [console.cloud.google.com](https://console.cloud.google.com/) → selector de proyectos (arriba a la izquierda) → New project → nómbralo `cloud-cafe-tunombre` → Create. Verifica que quede ligado a tu facturación (menú ☰ → Billing; si dice que no tiene, usa Link a billing account). Anota tu Project ID (puede diferir del nombre).
-4. API key de Gemini (gratis, sin tarjeta): [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → Create API key → ⚠️ créala en un proyecto nuevo o sin facturación (la opción por default de AI Studio) — NO dentro de tu proyecto `cloud-cafe-tunombre`: en proyectos con facturación la API de Gemini es de prepago y tu key respondería `402` el sábado. Guárdala donde la encuentres.
+4. API key de Gemini (gratis, sin tarjeta): [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → Create API key → ⚠️ créala en un proyecto nuevo o sin facturación (la opción por default de AI Studio) — NO dentro de tu proyecto `cloud-cafe-tunombre`, y tampoco uses el botón "Create Gemini API key" que ofrece la consola de GCP: en proyectos con facturación la API de Gemini es de prepago y tu key respondería `402` el sábado. Guárdala donde la encuentres.
 5. El día del evento: laptop con Chrome + cargador. Es todo. (Cuenta de GitHub: opcional — solo si al final quieres llevarte tu propia copia del repo.)
 
 ---
@@ -51,6 +51,7 @@ gcloud config set project TU_PROJECT_ID
 🛟 ¿Te perdiste?
 
 * `verify.sh` marca ❌ en billing → tu proyecto no tiene facturación: consola → Billing → Link a billing account (la del crédito/trial), y corre `setup.sh` de nuevo.
+* Al ligar billing sale `Cloud billing quota exceeded` → tu cuenta llegó a su tope de proyectos con facturación: desliga un proyecto viejo (Billing → Account management) y reintenta.
 * Cualquier otro ❌ → `setup.sh` y `verify.sh` son seguros de repetir las veces que haga falta.
 
 ---
@@ -97,7 +98,7 @@ Al terminar te da una URL `https://cloud-cafe-....run.app`. Ábrela. Ese es TU s
 
 * `billing account not found` → catch-up de billing en CP0 y reintenta.
 * Error de permisos/APIs → `./scripts/setup.sh` otra vez y reintenta el deploy.
-* Se te cerró Cloud Shell → ábrelo de nuevo, `cd gdg-cloud-cafe` y sigue: nada se pierde.
+* ¿Se te cerró Cloud Shell? Reábrelo (puede pedir Authorize otra vez) y `cd gdg-cloud-cafe`. Tu repo y lo desplegado siguen ahí; lo único que se reinicia en una sesión nueva son el venv activo (`source .venv/bin/activate`) y las variables exportadas.
 
 ---
 
@@ -107,9 +108,9 @@ Primero mira la demo 👀: el facilitador va a conectar su repo a Cloud Build co
 
 Ahora tú, con tu "pipeline manual" (mismo resultado, lo disparas tú): personaliza tu café y vuelve a desplegar.
 
-1. Abre el editor de Cloud Shell (botón Open Editor o `edit app/static/index.html`) y cambia el nombre del café por el tuyo: "Cloud Café de Ana".
+1. Abre el editor con `edit app/static/index.html` (tarda ~15 s en abrir y tapa la terminal — para volver, botón Open Terminal). Busca "Cloud Café" en el `<h1>` (el título grande de la página) y cámbialo por el tuyo: "Cloud Café de Ana". El editor guarda solo.
 
-2. Guarda el cambio en git y despliega:
+2. Vuelve a la terminal (Open Terminal), guarda el cambio en git y despliega:
 
 ```bash
 git add -A && git commit -m "feat: el café ya tiene dueño"
@@ -142,22 +143,24 @@ cd ~/gdg-cloud-cafe
 ./scripts/loadgen.sh https://TU-URL.run.app
 ```
 
+(¿No tienes tu URL a la mano? Te la dice: `gcloud run services describe cloud-cafe --region us-central1 --format='value(status.url)'`)
+
 Cuando el deploy termine, mira tu UI: badge `v2-promos`… y las órdenes empiezan a salir en rojo o tardan una eternidad. El loadgen escupe 500s. Felicidades: acabas de romper producción. 🎉 (A propósito. Eso es lo que lo hace divertido.)
 
 ✅ CP4: badge `v2-promos` y errores visibles en UI y loadgen.
 
-🛟 ¿Te perdiste? `not something we can merge` → te falta el fetch: `git fetch origin` y reintenta. Conflicto de merge por tu cambio de CP3 → `git merge --abort`, luego `git checkout app/static/index.html` y reintenta el merge (tu nombre se pierde, el drama continúa).
+🛟 ¿Te perdiste? `not something we can merge` → te falta el fetch: `git fetch origin` y reintenta.
 
 ---
 
 ## CP5 — Leer el desastre y revertirlo
 
-1. Ve el daño como lo vería tu equipo de guardia: consola → Cloud Run → cloud-cafe:
+1. Ve el daño como lo vería tu equipo de guardia: consola → Cloud Run → cloud-cafe (abre en Overview; si es tu primera vez te ofrece un tour — ciérralo):
 
-* Pestaña Metrics: error rate y latencia (⏱️ dale ~2 min — las métricas tardan en aparecer; mientras, mira el loadgen).
-* Pestaña Logs: filtra severidad `Error` — ahí está el traceback del promo engine. Ese texto exacto lo va a leer Gemini en el bloque 3.
+* Observability → Metrics: cambia el rango a "Last 30 minutes" (abre en "Last 1 day" y el pico se ve como una rayita pegada al borde). ⏱️ Las métricas tardan ~2 min en aparecer; mientras, mira el loadgen.
+* Observability → Logs: filtra severidad `Error` — ahí está el traceback del promo engine. Ese texto exacto lo va a leer Gemini en el bloque 3.
 
-En números reales de este mismo demo: v2 tira 13–20% de errores y un p95 de ~5.5 s, contra ~10 ms de v1. Eso, en tu empresa, es el teléfono sonando a las 3 AM.
+En números reales de los ensayos de este demo: v2 tira 12–20% de errores y un p95 de ~5.5 s, contra ~10–20 ms de v1. Eso, en tu empresa, es el teléfono sonando a las 3 AM.
 
 2. A las 3 AM no debuggeas: restauras. Cloud Run guarda cada deploy como una revisión inmutable — regresa el tráfico a la anterior:
 
@@ -167,17 +170,15 @@ gcloud run services update-traffic cloud-cafe --region us-central1 \
   --to-revisions REVISION-SANA=100
 ```
 
-(La sana es la anterior a la del merge; en la lista se ve la hora de cada una. También se puede desde la consola: Revisions → ⋮ → Manage traffic.)
+(La sana es la anterior a la del merge; en la lista se ve la hora de cada una. También desde la consola: pestaña Revision History → botón Manage traffic. Ojo: la URL que imprime el comando puede venir en formato viejo `…-uc.a.run.app` — sirve igual que la tuya.)
 
 3. Refresca la UI (~26 segundos después): badge de vuelta a la versión sana, loadgen en verde. Tiempo de recuperación: medio minuto.
 
-> ⚠️ Regla de la casa desde este momento: acabas de "anclar" el tráfico a una revisión específica. A partir de aquí, los deploys nuevos salen con 0% de tráfico hasta que lo liberes con:
+> ⚠️ Regla de la casa desde este momento: acabas de "anclar" el tráfico a una revisión específica. Tu próximo deploy va a salir con 0% de tráfico — y para confundirte más, el mensaje de ese deploy nombra una revisión que no es y dice "serving" un porcentaje viejo. Confía en `revisions list`, no en el mensaje, y libera el tráfico cuando toque con:
 >
 > ```bash
 > gcloud run services update-traffic cloud-cafe --region us-central1 --to-latest
 > ```
->
-> (Y ojo: el mensaje de gcloud tras el rollback puede nombrar una revisión que no es — confía en la lista, no en el mensaje.)
 
 > 🧠 La moraleja del bloque: la velocidad segura no viene de deployar poco — viene de que cada cambio sea chico y reversible. El código roto sigue en `main`; en la vida real ahora harías el fix con calma (está resuelto en `demo/fixed`, por si quieres verlo).
 
@@ -203,7 +204,7 @@ python3 copilot/copilot.py --check
 
 ✅ CP6: el copiloto confirma "key válida — Gemini respondió".
 
-🛟 ¿Te perdiste? Error de key → exporta la variable en ESTA pestaña (cada pestaña es una sesión distinta). `ModuleNotFoundError` → te faltó el `source .venv/bin/activate`. Error 402 (prepayment credits are depleted) → tu key nació en un proyecto con facturación: crea una nueva en AI Studio dentro de un proyecto sin billing y re-exporta. **Error 429/503** → mismos rescates que la caja de CP7.
+🛟 ¿Te perdiste? Error de key → exporta la variable en ESTA pestaña (cada pestaña es una sesión distinta). `ModuleNotFoundError` → te faltó el `source .venv/bin/activate`. Error 402 (prepayment credits are depleted) → tu key nació en un proyecto con facturación: crea una nueva en AI Studio dentro de un proyecto sin billing y re-exporta. Error 429/503 → mismos rescates que la caja de CP7.
 
 ---
 
@@ -236,8 +237,15 @@ python3 copilot/copilot.py --minutes 10
 
 ## 🏁 Bonus para rápidos
 
-* Canary release: manda 90/10 entre la revisión sana y la rota (`--to-revisions SANA=90,ROTA=10`) y observa en el loadgen cómo solo ~1 de cada 10 órdenes sufre. Así se prueba un release con el 10% de los usuarios.
-* El fix de verdad: `git merge origin/demo/fixed`, deploy con `--source`, y libera el tráfico (`--to-latest` — la regla de la casa de CP5). Badge `v2.1-promos-fixed`, 0 errores. El ciclo completo: ship → break → rollback → fix → ship.
+* Canary release: relanza el loadgen en tu otra pestaña (flecha ↑ y Enter) y reparte el tráfico 90/10 entre la revisión sana y la rota:
+
+  ```bash
+  gcloud run services update-traffic cloud-cafe --region us-central1 \
+    --to-revisions REVISION-SANA=90,REVISION-ROTA=10
+  ```
+
+  Observa en el loadgen cómo solo ~1 de cada 10 órdenes sufre. Así se prueba un release con el 10% de los usuarios.
+* El fix de verdad: `git merge origin/demo/fixed --no-edit`, deploy con `--source`, y libera el tráfico (`--to-latest` — la regla de la casa de CP5). Badge `v2.1-promos-fixed`, 0 errores. El ciclo completo: ship → break → rollback → fix → ship.
 * Hackea a tu copiloto: edita `PROMPT_INCIDENTE` en `copilot/copilot.py` (pídele formato de postmortem, o que responda como pirata 🏴‍☠️) y vuelve a correrlo.
 * Llévate tu copia: haz fork del repo a tu cuenta de GitHub (desmarca "Copy the `main` branch only" para llevarte también las ramas del demo) y monta el trigger de Cloud Build con calma en casa — pasos en el anexo.
 
@@ -251,7 +259,7 @@ Lo de hoy cuesta ~$0 dentro del free tier (medido: $0.06 sin él). Para dejar to
 ./scripts/cleanup.sh
 ```
 
-(Borra el servicio, las imágenes de Artifact Registry —incluido el repo `cloud-run-source-deploy` que creó el deploy— y los buckets del build, con confirmación antes de cada cosa.)
+(Borra, con confirmación por cada cosa, el servicio, los triggers, las imágenes de Artifact Registry —incluido el repo `cloud-run-source-deploy` que creó el deploy— y los buckets del build, y al final te enseña el inventario.)
 
 O la opción nuclear, que borra absolutamente todo:
 
